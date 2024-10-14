@@ -1,0 +1,58 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="Eslint" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <value>
+          <list size="29">
+            <item index="0" class="java.lang.String" itemvalue="fastapi" />
+            <item index="1" class="java.lang.String" itemvalue="sseclient-py" />
+            <item index="2" class="java.lang.String" itemvalue="pytest" />
+            <item index="3" class="java.lang.String" itemvalue="pytest-cov" />
+            <item index="4" class="java.lang.String" itemvalue="matplotlib" />
+            <item index="5" class="java.lang.String" itemvalue="numpy" />
+            <item index="6" class="java.lang.String" itemvalue="toml" />
+            <item index="7" class="java.lang.String" itemvalue="omni" />
+            <item index="8" class="java.lang.String" itemvalue="pydantic" />
+            <item index="9" class="java.lang.String" itemvalue="stable-baselines3" />
+            <item index="10" class="java.lang.String" itemvalue="gymnasium" />
+            <item index="11" class="java.lang.String" itemvalue="rsl-rl" />
+            <item index="12" class="java.lang.String" itemvalue="sphinx" />
+            <item index="13" class="java.lang.String" itemvalue="myst_parser" />
+            <item index="14" class="java.lang.String" itemvalue="sphinx_markdown_tables" />
+            <item index="15" class="java.lang.String" itemvalue="sphinx_copybutton" />
+            <item index="16" class="java.lang.String" itemvalue="codespell" />
+            <item index="17" class="java.lang.String" itemvalue="googleapiclient" />
+            <item index="18" class="java.lang.String" itemvalue="lmdeploy" />
+            <item index="19" class="java.lang.String" itemvalue="tiktoken" />
+            <item index="20" class="java.lang.String" itemvalue="ipython" />
+            <item index="21" class="java.lang.String" itemvalue="pyiqa" />
+            <item index="22" class="java.lang.String" itemvalue="boto3" />
+            <item index="23" class="java.lang.String" itemvalue="pyspark" />
+            <item index="24" class="java.lang.String" itemvalue="google-api-python-client" />
+            <item index="25" class="java.lang.String" itemvalue="torch" />
+            <item index="26" class="java.lang.String" itemvalue="opencv-python-headless" />
+            <item index="27" class="java.lang.String" itemvalue="httpx" />
+            <item index="28" class="java.lang.String" itemvalue="pre-commit" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyPep8NamingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="ignoredErrors">
+        <list>
+          <option value="N806" />
+          <option value="N813" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyShadowingBuiltinsInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="ignoredNames">
+        <list>
+          <option value="copyright" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>
