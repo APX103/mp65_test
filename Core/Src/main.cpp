@@ -25,7 +25,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 // #include "MPU6500.h"
-// #include "MadgwickAHRS.hpp"
+#include "MadgwickAHRS.hpp"
 #include "MPU6500_CPP.hpp"
 #include "usbd_cdc_if.h"
 
@@ -33,7 +33,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-#define IMU_ADDRESS 0x68    //Change to the address of the IMU
+#define IMU_ADDRESS 0xD0    //Change to the address of the IMU
 // extern uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
 /* USER CODE END PTD */
 
@@ -58,21 +58,21 @@
 void SystemClock_Config();
 /* USER CODE BEGIN PFP */
 
-// float convertRawAcceleration(int aRaw) {
+// float convertRawAcceleration(const int aRaw) {
 //   // since we are using 2 g range
 //   // -2 g maps to a raw value of -32768
 //   // +2 g maps to a raw value of 32767
 //
-//   float a = (aRaw * 2.0) / 32768.0;
+//   const float a = (aRaw * 2.0) / 32768.0;
 //   return a;
 // }
 //
-// float convertRawGyro(int gRaw) {
+// float convertRawGyro(const int gRaw) {
 //   // since we are using 250 degrees/seconds range
 //   // -250 maps to a raw value of -32768
 //   // +250 maps to a raw value of 32767
 //
-//   float g = (gRaw * 250.0) / 32768.0;
+//   const float g = (gRaw * 250.0) / 32768.0;
 //   return g;
 // }
 
@@ -81,9 +81,9 @@ void SystemClock_Config();
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 // uint8_t buffer[] = "HelloWorld\r\n";
-// Madgwick filter;
-// unsigned short microsPrintCount;
-// unsigned long microsPerReading, microsPrevious;
+Madgwick filter;
+unsigned short microsPrintCount;
+unsigned long microsPerReading, microsPrevious;
 
 /* USER CODE END 0 */
 
@@ -96,9 +96,8 @@ int main()
 
   /* USER CODE BEGIN 1 */
   calData calib = { 0 };  //Calibration data
-  AccelData accelData;    //Sensor data
-  GyroData gyroData;
-  MagData magData;
+  AccelData accelData{};    //Sensor data
+  GyroData gyroData{};
   MPU6500 IMU;
   /* USER CODE END 1 */
 
@@ -123,25 +122,26 @@ int main()
   MX_I2C3_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-  // // start the IMU and filter
-  // HAL_Delay(100);
+  // start the IMU and filter
+  HAL_Delay(100);
   // MPU6500_Initialization();
-  // filter.begin(200);
+  filter.begin(50);
   //
   // // initialize variables to pace updates to correct rate
-  // microsPrintCount = 0;
-  // microsPerReading = 25;
+  microsPrintCount = 0;
+  microsPerReading = 20;
   // microsPrevious = HAL_GetTick();
   // printf("microsPrevious: %ld\r\n", microsPrevious);
   // // HAL_Delay(1000);
   // // microsPrevious = HAL_GetTick();
   // // printf("microsPrevious_1s_after: %ld\r\n", microsPrevious);
   //
-
+  HAL_Delay(5000);
   if (const int err = IMU.init(calib, IMU_ADDRESS); err != 0) {
     printf("Error initializing IMU: %d\r\n", err);
     while (true) {
       printf("Please check IMU connection and try again...\r\n");
+      HAL_Delay(5000);
     }
   }
 
@@ -174,12 +174,26 @@ int main()
   /* USER CODE BEGIN WHILE */
   while (true)
   {
-    IMU.update();
-    IMU.getAccel(&accelData);
-    IMU.getGyro(&gyroData);
-    printf("%f, %f, %f, %f, %f, %f\r\n", accelData.accelX, accelData.accelY, accelData.accelZ, gyroData.gyroX, gyroData.gyroY, gyroData.gyroZ);
-    HAL_Delay(50);
-
+    if (const unsigned long microsNow = HAL_GetTick(); microsNow - microsPrevious >= microsPerReading) {
+      IMU.update();
+      IMU.getAccel(&accelData);
+      IMU.getGyro(&gyroData);
+      // printf("%f, %f, %f, %f, %f, %f\r\n", accelData.accelX, accelData.accelY, accelData.accelZ, gyroData.gyroX, gyroData.gyroY, gyroData.gyroZ);
+      // const float ax = convertRawAcceleration(accelData.accelX);
+      // const float ay = convertRawAcceleration(accelData.accelY);
+      // const float az = convertRawAcceleration(accelData.accelZ);
+      // const float gx = convertRawGyro(gyroData.gyroX);
+      // const float gy = convertRawGyro(gyroData.gyroY);
+      // const float gz = convertRawGyro(gyroData.gyroZ);
+      // filter.updateIMU(gx, gy, gz, ax, ay, az);
+      filter.updateIMU(gyroData.gyroX, gyroData.gyroY, gyroData.gyroZ, accelData.accelX, accelData.accelY, accelData.accelZ);
+      // HAL_Delay(50);
+      microsPrevious = microsPrevious + microsPerReading;
+      const float roll = filter.getRoll();
+      const float pitch = filter.getPitch();
+      const float heading = filter.getYaw();
+      printf("%f, %f, %f\r\n", roll, pitch, heading);
+    }
    //  // get time interval
    //  if (const unsigned long microsNow = HAL_GetTick(); microsNow - microsPrevious >= microsPerReading) {
 	  // MPU6500_ProcessData(&MPU6500);

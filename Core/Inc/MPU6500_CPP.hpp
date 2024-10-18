@@ -134,7 +134,7 @@
 #define MPU6500_FIFO_COUNTH      0x72
 #define MPU6500_FIFO_COUNTL      0x73
 #define MPU6500_FIFO_R_W         0x74
-#define MPU6500_WHO_AM_I_MPU6500 0x75 // Should return 0x70
+#define MPU6500_WHO_AM_I_MPU6500 0X75 // Should return 0x70
 #define MPU6500_WHOAMI_DEFAULT_VALUE 0x70
 #define MPU6500_XA_OFFSET_H      0x77
 #define MPU6500_XA_OFFSET_L      0x78

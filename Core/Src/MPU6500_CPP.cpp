@@ -171,8 +171,9 @@ void MPU6500::getGyro(GyroData* out)
 	memcpy(out, &gyro, sizeof(gyro));
 }
 
-int MPU6500::setAccelRange(int range) {
+int MPU6500::setAccelRange(const int range) {
 	uint8_t c;
+	printf("acc  range: %d\r\n", range);
 	if (range == 16) {
 		aRes = 16.f / 32768.f;			//ares value for full range (16g) readings
 		c = 0x03 << 3;
@@ -196,8 +197,9 @@ int MPU6500::setAccelRange(int range) {
 	return 0;
 }
 
-int MPU6500::setGyroRange(int range) {
+int MPU6500::setGyroRange(const int range) {
 	uint8_t c;
+	printf("gyro range: %d\r\n", range);
 	if (range == 2000) {
 		gRes = 2000.f / 32768.f;			//ares value for full range (2000dps) readings
 		c = 0x03 << 3;
