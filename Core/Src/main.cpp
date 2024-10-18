@@ -24,15 +24,17 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "MPU6500.h"
-#include "MadgwickAHRS.hpp"
+// #include "MPU6500.h"
+// #include "MadgwickAHRS.hpp"
+#include "MPU6500_CPP.hpp"
 #include "usbd_cdc_if.h"
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-//extern uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
+#define IMU_ADDRESS 0x68    //Change to the address of the IMU
+// extern uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -48,38 +50,40 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+// float ax, ay, az;
+// float gx, gy, gz;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-void SystemClock_Config(void);
+void SystemClock_Config();
 /* USER CODE BEGIN PFP */
-float convertRawAcceleration(int aRaw) {
-  // since we are using 2 g range
-  // -2 g maps to a raw value of -32768
-  // +2 g maps to a raw value of 32767
 
-  float a = (aRaw * 2.0) / 32768.0;
-  return a;
-}
-
-float convertRawGyro(int gRaw) {
-  // since we are using 250 degrees/seconds range
-  // -250 maps to a raw value of -32768
-  // +250 maps to a raw value of 32767
-
-  float g = (gRaw * 250.0) / 32768.0;
-  return g;
-}
+// float convertRawAcceleration(int aRaw) {
+//   // since we are using 2 g range
+//   // -2 g maps to a raw value of -32768
+//   // +2 g maps to a raw value of 32767
+//
+//   float a = (aRaw * 2.0) / 32768.0;
+//   return a;
+// }
+//
+// float convertRawGyro(int gRaw) {
+//   // since we are using 250 degrees/seconds range
+//   // -250 maps to a raw value of -32768
+//   // +250 maps to a raw value of 32767
+//
+//   float g = (gRaw * 250.0) / 32768.0;
+//   return g;
+// }
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t buffer[] = "HelloWorld\r\n";
-Madgwick filter;
-unsigned short microsPrintCount;
-unsigned long microsPerReading, microsPrevious;
+// uint8_t buffer[] = "HelloWorld\r\n";
+// Madgwick filter;
+// unsigned short microsPrintCount;
+// unsigned long microsPerReading, microsPrevious;
 
 /* USER CODE END 0 */
 
@@ -91,7 +95,11 @@ int main()
 {
 
   /* USER CODE BEGIN 1 */
-
+  calData calib = { 0 };  //Calibration data
+  AccelData accelData;    //Sensor data
+  GyroData gyroData;
+  MagData magData;
+  MPU6500 IMU;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -115,56 +123,96 @@ int main()
   MX_I2C3_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-  // start the IMU and filter
-  HAL_Delay(100);
-  MPU6500_Initialization();
-  filter.begin(200);
+  // // start the IMU and filter
+  // HAL_Delay(100);
+  // MPU6500_Initialization();
+  // filter.begin(200);
+  //
+  // // initialize variables to pace updates to correct rate
+  // microsPrintCount = 0;
+  // microsPerReading = 25;
+  // microsPrevious = HAL_GetTick();
+  // printf("microsPrevious: %ld\r\n", microsPrevious);
+  // // HAL_Delay(1000);
+  // // microsPrevious = HAL_GetTick();
+  // // printf("microsPrevious_1s_after: %ld\r\n", microsPrevious);
+  //
 
-  // initialize variables to pace updates to correct rate
-  microsPrintCount = 0;
-  microsPerReading = 25;
-  microsPrevious = HAL_GetTick();
-//  printf("microsPrevious: %ld\r\n", microsPrevious);
-//  HAL_Delay(1000);
-//  microsPrevious = HAL_GetTick();
-//  printf("microsPrevious_1s_after: %ld\r\n", microsPrevious);
+  if (const int err = IMU.init(calib, IMU_ADDRESS); err != 0) {
+    printf("Error initializing IMU: %d\r\n", err);
+    while (true) {
+      printf("Please check IMU connection and try again...\r\n");
+    }
+  }
+
+  printf("FastIMU Calibrated Quaternion example\r\n");
+  if (IMU.hasMagnetometer()) {
+    HAL_Delay(1000);
+    printf("Move IMU in figure 8 pattern until done.\r\n");
+    HAL_Delay(3000);
+    IMU.calibrateMag(&calib);
+    printf("Magnetic calibration done!\r\n");
+  }
+  else {
+    HAL_Delay(1000);
+  }
+  printf("Keep IMU level.");
+  HAL_Delay(5000);
+  IMU.calibrateAccelGyro(&calib);
+  printf("Calibration done!\r\n");
+  printf("Accel biases X/Y/Z: \r\n");
+  printf("%f, %f, %f", calib.accelBias[0], calib.accelBias[1], calib.accelBias[2]);
+  printf("Gyro biases X/Y/Z: \r\n");
+  printf("%f, %f, %f", calib.gyroBias[0], calib.gyroBias[1], calib.gyroBias[2]);
+
+  HAL_Delay(5000);
+  IMU.init(calib, IMU_ADDRESS);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (true)
   {
-    float ax, ay, az;
-    float gx, gy, gz;
-    float roll, pitch, heading;
+    IMU.update();
+    IMU.getAccel(&accelData);
+    IMU.getGyro(&gyroData);
+    printf("%f, %f, %f, %f, %f, %f\r\n", accelData.accelX, accelData.accelY, accelData.accelZ, gyroData.gyroX, gyroData.gyroY, gyroData.gyroZ);
+    HAL_Delay(50);
 
-    // get time interval
-    if (const unsigned long microsNow = HAL_GetTick(); microsNow - microsPrevious >= microsPerReading) {
-	  MPU6500_ProcessData(&MPU6500);
-//      printf("%f, %f, %f\n", MPU6500.acc_x, MPU6500.acc_y, MPU6500.acc_z);
-//      printf("%f, %f, %f\n", MPU6500.gyro_x, MPU6500.gyro_y, MPU6500.gyro_z);
-//      printf("%d, %d, %d, %d, %d, %d\r\n", MPU6500.acc_x_raw, MPU6500.acc_y_raw, MPU6500.acc_z_raw, MPU6500.gyro_x_raw, MPU6500.gyro_y_raw, MPU6500.gyro_z_raw);
-      ax = convertRawAcceleration(MPU6500.acc_x_raw);
-      ay = convertRawAcceleration(MPU6500.acc_y_raw);
-      az = convertRawAcceleration(MPU6500.acc_z_raw);
-      gx = convertRawGyro(MPU6500.gyro_x_raw);
-      gy = convertRawGyro(MPU6500.gyro_y_raw);
-      gz = convertRawGyro(MPU6500.gyro_z_raw);
+   //  // get time interval
+   //  if (const unsigned long microsNow = HAL_GetTick(); microsNow - microsPrevious >= microsPerReading) {
+	  // MPU6500_ProcessData(&MPU6500);
+   //    // printf("%f, %f, %f, %f, %f, %f\r\n", MPU6500.acc_x, MPU6500.acc_y, MPU6500.acc_z, MPU6500.gyro_x, MPU6500.gyro_y, MPU6500.gyro_z);
+   //    // printf("%d, %d, %d, %d, %d, %d\r\n", MPU6500.acc_x_raw, MPU6500.acc_y_raw, MPU6500.acc_z_raw, MPU6500.gyro_x_raw, MPU6500.gyro_y_raw, MPU6500.gyro_z_raw);
+   //    // const float ax = convertRawAcceleration(MPU6500.acc_x_raw);
+   //    // const float ay = convertRawAcceleration(MPU6500.acc_y_raw);
+   //    // const float az = convertRawAcceleration(MPU6500.acc_z_raw);
+   //    // const float gx = convertRawGyro(MPU6500.gyro_x_raw);
+   //    // const float gy = convertRawGyro(MPU6500.gyro_y_raw);
+   //    // const float gz = convertRawGyro(MPU6500.gyro_z_raw);
+   //    ax = MPU6500.acc_x;
+   //    ay = MPU6500.acc_y;
+   //    az = MPU6500.acc_z;
+   //    gx = MPU6500.gyro_x;
+   //    gy = MPU6500.gyro_y;
+   //    gz = MPU6500.gyro_z;
+   //
+   //    // update the filter, which computes orientation
+   //    filter.updateIMU(gx, gy, gz, ax, ay, az);
+   //    // filter.updateIMU(MPU6500.gyro_x_raw, MPU6500.gyro_y_raw, MPU6500.gyro_z_raw, MPU6500.acc_x_raw, MPU6500.acc_y_raw, MPU6500.acc_z_raw);
+   //
+   //    microsPrevious = microsPrevious + microsPerReading;
+   //
+   //  	microsPrintCount = 0;
+   //  	const float roll = filter.getRoll();
+   //    const float pitch = filter.getPitch();
+   //    const float heading = filter.getYaw();
+   //    // printf("%f, %f, %f, %f, %f, %f\r\n", MPU6500.acc_x, MPU6500.acc_y, MPU6500.acc_z, MPU6500.gyro_x, MPU6500.gyro_y, MPU6500.gyro_z);
+   //    // printf("%f, %f, %f, %f, %f, %f\r\n", ax, ay, az, gx, gy, gz);
+   //  	printf("%f, %f, %f\r\n", roll, pitch, heading);
+   //  }
 
-      // update the filter, which computes orientation
-      filter.updateIMU(gx, gy, gz, ax, ay, az);
-
-      microsPrevious = microsPrevious + microsPerReading;
-      microsPrintCount += 1;
-    }
-
-    if (microsPrintCount > 10) {
-    	microsPrintCount = 0;
-    	roll = filter.getRoll();
-    	pitch = filter.getPitch();
-    	heading = filter.getYaw();
-    	printf("%d, %d, %d\r\n", (int)roll, (int)pitch, (int)heading);
-    }
 
     /* USER CODE END WHILE */
 
@@ -226,7 +274,7 @@ void SystemClock_Config()
 //    return len;
 //}
 extern "C" int _write(int file, char *ptr, int len) {
-  CDC_Transmit_FS((uint8_t*) ptr, len); return len;
+  CDC_Transmit_FS(reinterpret_cast<uint8_t *>(ptr), len); return len;
 }
 /* USER CODE END 4 */
 

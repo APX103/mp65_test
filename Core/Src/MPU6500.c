@@ -96,7 +96,7 @@ void MPU6500_Initialization(void)
 	HAL_Delay(50);
 
 	MPU6500_Get_LSB_Sensitivity(FS_SCALE_GYRO, FS_SCALE_ACC);
-	printf("LSB_Sensitivity_GYRO: %f, LSB_Sensitivity_ACC: %f\n",LSB_Sensitivity_GYRO, LSB_Sensitivity_ACC); // @suppress("Float formatting support")
+	printf("LSB_Sensitivity_GYRO: %f, LSB_Sensitivity_ACC: %f\r\n",LSB_Sensitivity_GYRO, LSB_Sensitivity_ACC); // @suppress("Float formatting support")
 
 	//Interrupt PIN setting
 	uint8_t INT_LEVEL = 0x0; //0 - active high, 1 - active low
@@ -110,8 +110,9 @@ void MPU6500_Initialization(void)
 	MPU6500_WriteByte(MPU6500_INT_ENABLE, DATA_RDY_EN);
 	HAL_Delay(50);
 
-	printf("MPU6500 setting is finished\n");
+	printf("MPU6500 setting is finished\r\n");
 }
+
 /*Get Raw Data from sensor*/
 void MPU6500_Get6AxisRawData(Struct_MPU6500* mpu6500)
 {
@@ -177,7 +178,6 @@ void MPU6500_DataConvert(Struct_MPU6500* mpu6500)
 	mpu6500->gyro_y = mpu6500->gyro_y_raw / LSB_Sensitivity_GYRO;
 	mpu6500->gyro_z = mpu6500->gyro_z_raw / LSB_Sensitivity_GYRO;
 }
-
 
 int MPU6500_DataReady(void)
 {
