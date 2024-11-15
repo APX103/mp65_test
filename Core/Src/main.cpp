@@ -28,12 +28,14 @@
 #include "MadgwickAHRS.hpp"
 #include "MPU6500_CPP.hpp"
 #include "usbd_cdc_if.h"
+#include "PositionEstimator.h"
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 #define IMU_ADDRESS 0xD0    //Change to the address of the IMU
+#define SAMPLE_RATE 50
 // extern uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
 /* USER CODE END PTD */
 
@@ -82,6 +84,7 @@ void SystemClock_Config();
 /* USER CODE BEGIN 0 */
 // uint8_t buffer[] = "HelloWorld\r\n";
 Madgwick filter;
+PositionEstimator positionEstimator;
 unsigned short microsPrintCount;
 unsigned long microsPerReading, microsPrevious;
 
@@ -125,7 +128,7 @@ int main()
   // start the IMU and filter
   HAL_Delay(100);
   // MPU6500_Initialization();
-  filter.begin(50);
+  filter.begin(SAMPLE_RATE);
   //
   // // initialize variables to pace updates to correct rate
   microsPrintCount = 0;
@@ -188,11 +191,13 @@ int main()
       // filter.updateIMU(gx, gy, gz, ax, ay, az);
       filter.updateIMU(gyroData.gyroX, gyroData.gyroY, gyroData.gyroZ, accelData.accelX, accelData.accelY, accelData.accelZ);
       // HAL_Delay(50);
+      positionEstimator.update(accelData.accelX, accelData.accelY, accelData.accelZ, filter.getQ0(), filter.getQ1(), filter.getQ2(), filter.getQ3());
       microsPrevious = microsPrevious + microsPerReading;
       const float roll = filter.getRoll();
       const float pitch = filter.getPitch();
       const float heading = filter.getYaw();
-      printf("%f, %f, %f\r\n", roll, pitch, heading);
+      const Vector3D pos = positionEstimator.getPosition();
+      printf("%f, %f, %f, %f, %f, %f\r\n", roll, pitch, heading, pos.x, pos.y, pos.z);
     }
    //  // get time interval
    //  if (const unsigned long microsNow = HAL_GetTick(); microsNow - microsPrevious >= microsPerReading) {
